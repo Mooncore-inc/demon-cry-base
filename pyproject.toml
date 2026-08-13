@@ -1,0 +1,17 @@
+[project]
+name = "demon-cry-base"
+version = "0.1.0"
+description = "Base module for demon-cry OSINT plugins"
+authors = [
+    {name = "mooncore-inc"}
+]
+license = "MIT"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
