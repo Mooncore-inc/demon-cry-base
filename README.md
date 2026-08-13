@@ -6,7 +6,11 @@
 
 ```bash
 pip install demon-cry-base
-Использование
+```
+
+## Использование
+
+```bash
 from demon_cry_base import BaseModule
 
 class MyModule(BaseModule):
