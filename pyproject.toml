@@ -1,6 +1,6 @@
 [project]
 name = "demon-cry-base"
-version = "0.1.1"
+dynamic = ["version"]
 description = "Base module for demon-cry OSINT plugins"
 authors = [
     {name = "mooncore-inc"}
@@ -11,7 +11,15 @@ requires-python = ">=3.12"
 dependencies = [
 ]
 
+[tool.poetry]
+version = "0.0.0"
+
+[tool.poetry.requires-plugins]
+poetry-dynamic-versioning = { version = ">=1.0.0,<2.0.0", extras = ["plugin"] }
+
+[tool.poetry-dynamic-versioning]
+enable = true
 
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=2.0.0,<3.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
+build-backend = "poetry_dynamic_versioning.backend"

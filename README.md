@@ -10,14 +10,70 @@ pip install demon-cry-base
 
 ## Использование
 
-```bash
-from demon_cry_base import BaseModule
+### Модуль без конфига
+
+Для простых Stateless-модулей можно использовать `ModuleConfig` напрямую:
+
+```python
+from demon_cry_base import BaseModule, ModuleConfig
+
+
+class PingModule(BaseModule):
+    name = "ping"
+    description = "Check if host is alive"
+    category = "utility"
+
+    async def execute(self, config: ModuleConfig, **kwargs) -> dict:
+        return {"status": "ok"}
+```
+
+### Создание модуля
+
+```python
+from demon_cry_base import BaseModule, ModuleConfig
+
+
+class MyModuleConfig(ModuleConfig):
+    target: str
+    timeout: int = 30
+
 
 class MyModule(BaseModule):
     name = "my_module"
     description = "My OSINT module"
     category = "custom"
-    parameters = {"target": {"type": "string", "required": True}}
+    config_model = MyModuleConfig
 
-    async def execute(self, config: dict, target: str, **kwargs) -> dict:
-        return {"result": f"Scanned {target}"}
+    async def execute(self, config: MyModuleConfig, **kwargs) -> dict:
+        return {"result": f"Scanned {config.target}"}
+```
+
+### Конфиги
+
+`ModuleConfig` — это Pydantic-модель. Наследуйте её и добавляйте поля:
+
+```python
+class ReconConfig(ModuleConfig):
+    target: str
+    deep: bool = False
+    ports: list[int] = [80, 443]
+
+
+class SocialConfig(ModuleConfig):
+    username: str
+    platforms: list[str] = ["twitter", "telegram"]
+```
+
+Затем укажите `config_model` в модуле:
+
+```python
+class ReconModule(BaseModule):
+    name = "recon"
+    description = "Network reconnaissance"
+    category = "osint"
+    config_model = ReconConfig
+
+    async def execute(self, config: ReconConfig, **kwargs) -> dict:
+        if config.deep:
+            ...
+```
