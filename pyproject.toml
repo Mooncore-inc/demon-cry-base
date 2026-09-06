@@ -1,6 +1,6 @@
 [project]
 name = "demon-cry-base"
-version = "0.1.0"
+version = "0.1.1"
 description = "Base module for demon-cry OSINT plugins"
 authors = [
     {name = "mooncore-inc"}

@@ -1,4 +1,9 @@
 from abc import ABC, abstractmethod
+from pydantic import BaseModel
+
+class ModuleConfig(BaseModel):
+    """Базовый конфиг модуля."""
+    pass
 
 class BaseModule(ABC):
     """Базовый класс для всех OSINT-модулей demon-cry."""
@@ -7,6 +12,7 @@ class BaseModule(ABC):
     description: str
     category: str
     parameters: dict
+    config_model: type[ModuleConfig] = ModuleConfig
 
     @abstractmethod
     async def execute(self, config: dict, **kwargs) -> dict:
