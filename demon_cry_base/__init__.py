@@ -5,13 +5,17 @@ class ModuleConfig(BaseModel):
     """Базовый конфиг модуля."""
     pass
 
+class ModuleParameters(BaseModel):
+    """Базовый конфиг параметров"""
+    pass
+
 class BaseModule(ABC):
     """Базовый класс для всех OSINT-модулей demon-cry."""
 
     name: str
     description: str
     category: str
-    parameters: dict
+    parameters_model: type[ModuleParameters] = ModuleParameters
     config_model: type[ModuleConfig] = ModuleConfig
 
     @abstractmethod
