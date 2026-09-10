@@ -24,7 +24,7 @@ class PingModule(BaseModule):
     category = "utility"
     parameters_model = ModuleParameters
 
-    async def execute(self, config: ModuleConfig, params: ModuleParameters, **kwargs) -> dict:
+    async def execute(self, config: ModuleConfig, params: ModuleParameters) -> dict:
         return {"status": "ok"}
 ```
 
@@ -50,7 +50,7 @@ class MyModule(BaseModule):
     config_model = MyModuleConfig
     parameters_model = MyModuleParams
 
-    async def execute(self, config: MyModuleConfig, params: MyModuleParams, **kwargs) -> dict:
+    async def execute(self, config: MyModuleConfig, params: MyModuleParams) -> dict:
         return {"result": f"Scanned {params.target}"}
 ```
 
@@ -100,7 +100,7 @@ class ReconModule(BaseModule):
     config_model = ReconConfig
     parameters_model = ReconParams
 
-    async def execute(self, config: ReconConfig, params: ReconParams, **kwargs) -> dict:
+    async def execute(self, config: ReconConfig, params: ReconParams) -> dict:
         if config.deep:
             ...
 ```
@@ -131,7 +131,7 @@ class SearchModule(BaseModule):
     category = "osint"
     parameters_model = SearchParams
 
-    async def execute(self, config: ModuleConfig, params: SearchParams, **kwargs) -> dict:
+    async def execute(self, config: ModuleConfig, params: SearchParams) -> dict:
         # params.query — строка
         # params.category — enum
         # params.max_results — int с валидацией
@@ -174,7 +174,7 @@ class DnsLookup(BaseModule):
     config_model = DnsLookupConfig
     parameters_model = DnsLookupParams
 
-    async def execute(self, config: DnsLookupConfig, params: DnsLookupParams, **kwargs) -> dict:
+    async def execute(self, config: DnsLookupConfig, params: DnsLookupParams) -> dict:
         resolver = aiodns.DNSResolver(nameservers=config.name_servers)
         # config — настройки из БД (name_servers)
         # params.domain — домен из параметров

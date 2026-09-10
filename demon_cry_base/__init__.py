@@ -19,12 +19,12 @@ class BaseModule(ABC):
     config_model: type[ModuleConfig] = ModuleConfig
 
     @abstractmethod
-    async def execute(self, config: ModuleConfig, **kwargs) -> dict:
+    async def execute(self, config: ModuleConfig, params: ModuleParameters) -> dict:
         """Выполнение модуля.
 
         Args:
             config: Конфигурация модуля (загружена ядром).
-            **kwargs: Параметры из запроса.
+            params: Параметры из запроса.
 
         Returns:
             dict с результатом.
