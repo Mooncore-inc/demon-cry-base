@@ -1,13 +1,19 @@
 from abc import ABC, abstractmethod
+
 from pydantic import BaseModel
+
 
 class ModuleConfig(BaseModel):
     """Базовый конфиг модуля."""
+
     pass
+
 
 class ModuleParameters(BaseModel):
     """Базовый конфиг параметров"""
+
     pass
+
 
 class BaseModule(ABC):
     """Базовый класс для всех OSINT-модулей demon-cry."""

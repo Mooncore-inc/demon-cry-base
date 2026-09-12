@@ -11,6 +11,28 @@ requires-python = ">=3.12"
 dependencies = [
 ]
 
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+extend-exclude = ["alembic"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes (неиспользуемые переменные и импорты)
+    "I",   # isort (сортировка импортов)
+    "UP",  # pyupgrade (современный синтаксис)
+    "B",   # flake8-bugbear (антипаттерны, изменяемые аргументы по умолчанию)
+    "SIM", # flake8-simplify (упрощение синтаксиса)
+    "RET", # flake8-return (оптимизация return)
+]
+ignore = [
+    "E501", # длину строки контролирует ruff-format
+]
+
+[tool.ruff.format]
+quote-style = "double"
+
 [tool.poetry]
 version = "0.0.0"
 
