@@ -15,6 +15,12 @@ class ModuleParameters(BaseModel):
     pass
 
 
+class BaseEntity(BaseModel):
+    """Базовый энтити"""
+
+    pass
+
+
 class BaseModule(ABC):
     """Базовый класс для всех OSINT-модулей demon-cry."""
 
