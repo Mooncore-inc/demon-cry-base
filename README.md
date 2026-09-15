@@ -1,6 +1,6 @@
 # demon-cry-base
 
-Базовый класс для OSINT-модулей [demon-cry](https://github.com/fazzyt/demon-cry)
+Базовый класс для OSINT-плагинов [demon-cry](https://github.com/fazzyt/demon-cry)
 
 ## Установка
 
@@ -10,90 +10,90 @@ pip install demon-cry-base
 
 ## Использование
 
-### Модуль без конфига
+### Плагин без конфига
 
-Для простых Stateless-модулей можно использовать `ModuleConfig` напрямую:
+Для простых Stateless-плагинов можно использовать `PluginConfig` напрямую:
 
 ```python
-from demon_cry_base import BaseModule, ModuleConfig, ModuleParameters
+from demon_cry_base import BasePlugin, PluginConfig, PluginParameters
 
 
-class PingModule(BaseModule):
+class PingPlugin(BasePlugin):
     name = "ping"
     description = "Check if host is alive"
     category = "utility"
-    parameters_model = ModuleParameters
+    parameters_model = PluginParameters
 
-    async def execute(self, config: ModuleConfig, params: ModuleParameters) -> dict:
+    async def execute(self, config: PluginConfig, params: PluginParameters) -> dict:
         return {"status": "ok"}
 ```
 
-### Создание модуля
+### Создание плагина
 
 ```python
-from demon_cry_base import BaseModule, ModuleConfig, ModuleParameters
+from demon_cry_base import BasePlugin, PluginConfig, PluginParameters
 
 
-class MyModuleParams(ModuleParameters):
+class MyPluginParams(PluginParameters):
     target: str
     query: str | None = None
 
 
-class MyModuleConfig(ModuleConfig):
+class MyPluginConfig(PluginConfig):
     timeout: int = 30
 
 
-class MyModule(BaseModule):
-    name = "my_module"
-    description = "My OSINT module"
+class MyPlugin(BasePlugin):
+    name = "my_plugin"
+    description = "My OSINT plugin"
     category = "custom"
-    config_model = MyModuleConfig
-    parameters_model = MyModuleParams
+    config_model = MyPluginConfig
+    parameters_model = MyPluginParams
 
-    async def execute(self, config: MyModuleConfig, params: MyModuleParams) -> dict:
+    async def execute(self, config: MyPluginConfig, params: MyPluginParams) -> dict:
         return {"result": f"Scanned {params.target}"}
 ```
 
 ### Два источника данных
 
-Каждый модуль работает с двумя потоками данных:
+Каждый плагин работает с двумя потоками данных:
 
 | | **Config** | **Parameters** |
 |---|---|---|
 | Откуда | БД / ядро | Запрос / пользователь |
-| Формат | Pydantic-модель (`ModuleConfig`) | Pydantic-модель (`ModuleParameters`) |
-| Зачем | Настройки модуля | Входные данные |
+| Формат | Pydantic-модель (`PluginConfig`) | Pydantic-модель (`PluginParameters`) |
+| Зачем | Настройки плагина | Входные данные |
 | Передаётся | `config` в `execute()` | `params` в `execute()` |
 
 #### Config — настройки из БД
 
-`ModuleConfig` — это Pydantic-модель. Наследуйте её и добавляйте поля:
+`PluginConfig` — это Pydantic-модель. Наследуйте её и добавляйте поля:
 
 ```python
-class ReconConfig(ModuleConfig):
+class ReconConfig(PluginConfig):
     deep: bool = False
     ports: list[int] = [80, 443]
 
 
-class ApiConfig(ModuleConfig):
+class ApiConfig(PluginConfig):
     api_key: str
     rate_limit: int = 100
     timeout: int = 30
 ```
 
-Затем укажите `config_model` в модуле. Ядро загрузит конфиг из БД и передаст в `execute()`:
+Затем укажите `config_model` в плагине. Ядро загрузит конфиг из БД и передаст в `execute()`:
 
 ```python
-class ReconParams(ModuleParameters):
+class ReconParams(PluginParameters):
     target: str
 
 
-class ReconConfig(ModuleConfig):
+class ReconConfig(PluginConfig):
     deep: bool = False
     ports: list[int] = [80, 443]
 
 
-class ReconModule(BaseModule):
+class ReconPlugin(BasePlugin):
     name = "recon"
     description = "Network reconnaissance"
     category = "osint"
@@ -107,31 +107,31 @@ class ReconModule(BaseModule):
 
 #### Parameters — входные данные
 
-`ModuleParameters` — это Pydantic-модель. Наследуйте её и добавляйте поля:
+`PluginParameters` — это Pydantic-модель. Наследуйте её и добавляйте поля:
 
 ```python
 from typing import Literal
 from pydantic import Field
-from demon_cry_base import ModuleParameters
+from demon_cry_base import PluginParameters
 
 
-class SearchParams(ModuleParameters):
+class SearchParams(PluginParameters):
     query: str
     category: Literal["general", "images", "files", "it", "social media", "news"] = "general"
     time_range: Literal["day", "week", "month", "year", "all"] = "all"
     max_results: int = Field(default=10, ge=1, le=100, description="Max results to return")
 ```
 
-Затем укажите `parameters_model` в модуле:
+Затем укажите `parameters_model` в плагине:
 
 ```python
-class SearchModule(BaseModule):
+class SearchPlugin(BasePlugin):
     name = "search"
     description = "Web search"
     category = "osint"
     parameters_model = SearchParams
 
-    async def execute(self, config: ModuleConfig, params: SearchParams) -> dict:
+    async def execute(self, config: PluginConfig, params: SearchParams) -> dict:
         # params.query — строка
         # params.category — enum
         # params.max_results — int с валидацией
@@ -149,25 +149,25 @@ class SearchModule(BaseModule):
 | Валидация | `max_results: int = Field(default=10, ge=1, le=100)` |
 | List поле | `ports: list[int] = [80, 443]` |
 
-#### Полный пример: модуль с обоими источниками
+#### Полный пример: плагин с обоими источниками
 
 ```python
 import asyncio
 import aiodns
 from typing import Literal
-from demon_cry_base import BaseModule, ModuleConfig, ModuleParameters
+from demon_cry_base import BasePlugin, PluginConfig, PluginParameters
 
 
-class DnsLookupParams(ModuleParameters):
+class DnsLookupParams(PluginParameters):
     domain: str
     record_type: list[Literal["A", "AAAA", "MX", "NS", "TXT", "CNAME", "SOA", "PTR"]] = ["A"]
 
 
-class DnsLookupConfig(ModuleConfig):
+class DnsLookupConfig(PluginConfig):
     name_servers: list[str] = ["1.1.1.1", "8.8.8.8"]
 
 
-class DnsLookup(BaseModule):
+class DnsLookup(BasePlugin):
     name = "dns_lookup"
     description = "Finds DNS records"
     category = "network"

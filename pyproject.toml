@@ -1,7 +1,7 @@
 [project]
 name = "demon-cry-base"
 dynamic = ["version"]
-description = "Base module for demon-cry OSINT plugins"
+description = "Base classes for demon-cry OSINT plugins"
 authors = [
     {name = "mooncore-inc"}
 ]

@@ -3,13 +3,13 @@ from abc import ABC, abstractmethod
 from pydantic import BaseModel
 
 
-class ModuleConfig(BaseModel):
-    """Базовый конфиг модуля."""
+class PluginConfig(BaseModel):
+    """Базовый конфиг плагина."""
 
     pass
 
 
-class ModuleParameters(BaseModel):
+class PluginParameters(BaseModel):
     """Базовый конфиг параметров"""
 
     pass
@@ -21,21 +21,21 @@ class BaseEntity(BaseModel):
     pass
 
 
-class BaseModule(ABC):
-    """Базовый класс для всех OSINT-модулей demon-cry."""
+class BasePlugin(ABC):
+    """Базовый класс для всех OSINT-плагинов demon-cry."""
 
     name: str
     description: str
     category: str
-    parameters_model: type[ModuleParameters] = ModuleParameters
-    config_model: type[ModuleConfig] = ModuleConfig
+    parameters_model: type[PluginParameters] = PluginParameters
+    config_model: type[PluginConfig] = PluginConfig
 
     @abstractmethod
-    async def execute(self, config: ModuleConfig, params: ModuleParameters) -> dict:
-        """Выполнение модуля.
+    async def execute(self, config: PluginConfig, params: PluginParameters) -> dict:
+        """Выполнение плагина.
 
         Args:
-            config: Конфигурация модуля (загружена ядром).
+            config: Конфигурация плагина (загружена ядром).
             params: Параметры из запроса.
 
         Returns:
