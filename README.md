@@ -180,4 +180,26 @@ class DnsLookup(BasePlugin):
         # params.domain — домен из параметров
         # params.record_type — типы записей
         ...
+
+### Подключение к ядру (entry points)
+
+Ядро находит плагины через `importlib.metadata.entry_points(group="demon_cry.plugins")`.
+
+Укажите entry-point в `pyproject.toml` вашего плагина:
+
+```toml
+[project.entry-points."demon_cry.plugins"]
+my_plugin = "my_package.my_plugin:MyPlugin"
+```
+
+- Ключ слева (`my_plugin`) — имя для логов/отладки. Регистрирует ядро по `instance.name`, а не по ключу — держите их одинаковыми, чтобы не путаться.
+- Значение справа — `импорт-путь:КлассПлагина` (например `my_package.my_plugin:MyPlugin`). Класс должен наследовать `BasePlugin` и задавать `name`, `description`, `category`.
+
+Как это работает на стороне ядра при `discover()`:
+
+1. `ep.load()` → инстанцирует класс без аргументов, поэтому конструктор должен быть без обязательных аргументов.
+2. Кладёт инстанс в реестр по `instance.name`.
+3. Берёт дефолты из `instance.config_model().model_dump()` и создаёт запись в БД с `enabled=False`.
+
+Требования к плагину: уникальное `name`, конструктор без аргументов, дефолтный конфиг должен быть валидным без секретов в коде.
 ```
