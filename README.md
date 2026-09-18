@@ -1,6 +1,6 @@
 # demon-cry-base
 
-Базовый класс для OSINT-плагинов [demon-cry](https://github.com/fazzyt/demon-cry)
+Базовые контракты для OSINT-плагинов [demon-cry](https://github.com/fazzyt/demon-cry)
 
 ## Установка
 
@@ -10,16 +10,21 @@ pip install demon-cry-base
 
 ## Использование
 
+> **Правило импортов:** импортируйте только из корней контекстов —
+> `demon_cry_base.plugin` (всё для плагина) и `demon_cry_base.runner` (всё для раннера).
+> Глубокие пути (например `demon_cry_base.plugin.models`) — приватные, не полагайтесь на них.
+
 ### Плагин без конфига
 
 Для простых Stateless-плагинов можно использовать `PluginConfig` напрямую:
 
 ```python
-from demon_cry_base import BasePlugin, PluginConfig, PluginParameters
+from demon_cry_base.plugin import BasePlugin, PluginConfig, PluginParameters
+from demon_cry_base.runner import PluginResult
 
 
-async def ping_run(config: PluginConfig, params: PluginParameters) -> dict:
-    return {"status": "ok"}
+async def ping_run(config: PluginConfig, params: PluginParameters) -> PluginResult:
+    return PluginResult(status="ok", entities=[])
 
 
 class PingPlugin(BasePlugin):
@@ -31,12 +36,13 @@ class PingPlugin(BasePlugin):
 ```
 
 `execute_func` — путь к раннеру в формате `путь.до.модуля:имя_функции`.
-Раннер — отдельная `async`-функция `(config, params) -> dict`, ядро импортирует её через `importlib`.
+Раннер — отдельная `async`-функция `(config, params) -> PluginResult`, ядро импортирует её через `importlib`.
 
 ### Создание плагина
 
 ```python
-from demon_cry_base import BasePlugin, PluginConfig, PluginParameters
+from demon_cry_base.plugin import BasePlugin, PluginConfig, PluginParameters
+from demon_cry_base.runner import PluginResult
 
 
 class MyPluginParams(PluginParameters):
@@ -57,8 +63,8 @@ class MyPlugin(BasePlugin):
     execute_func = "my_package.my_plugin:my_plugin_run"
 
 
-async def my_plugin_run(config: MyPluginConfig, params: MyPluginParams) -> dict:
-    return {"result": f"Scanned {params.target}"}
+async def my_plugin_run(config: MyPluginConfig, params: MyPluginParams) -> PluginResult:
+    return PluginResult(status="ok", entities=[])
 ```
 
 ### Два источника данных
@@ -91,6 +97,9 @@ class ApiConfig(PluginConfig):
 Затем укажите `config_model` в плагине. Ядро загрузит конфиг из БД и передаст в функцию из `execute_func`:
 
 ```python
+from demon_cry_base.runner import PluginResult
+
+
 class ReconParams(PluginParameters):
     target: str
 
@@ -109,7 +118,7 @@ class ReconPlugin(BasePlugin):
     execute_func = "my_package.recon:recon_run"
 
 
-async def recon_run(config: ReconConfig, params: ReconParams) -> dict:
+async def recon_run(config: ReconConfig, params: ReconParams) -> PluginResult:
     if config.deep:
         ...
 ```
@@ -121,7 +130,7 @@ async def recon_run(config: ReconConfig, params: ReconParams) -> dict:
 ```python
 from typing import Literal
 from pydantic import Field
-from demon_cry_base import PluginParameters
+from demon_cry_base.plugin import PluginParameters
 
 
 class SearchParams(PluginParameters):
@@ -138,6 +147,10 @@ class SearchParams(PluginParameters):
 Затем укажите `parameters_model` в плагине:
 
 ```python
+from demon_cry_base.plugin import BasePlugin, PluginConfig
+from demon_cry_base.runner import PluginResult
+
+
 class SearchPlugin(BasePlugin):
     name = "search"
     description = "Web search"
@@ -146,7 +159,7 @@ class SearchPlugin(BasePlugin):
     execute_func = "my_package.search:search_run"
 
 
-async def search_run(config: PluginConfig, params: SearchParams) -> dict:
+async def search_run(config: PluginConfig, params: SearchParams) -> PluginResult:
     # params.query — строка
     # params.category — enum
     # params.max_results — int с валидацией
@@ -164,13 +177,42 @@ async def search_run(config: PluginConfig, params: SearchParams) -> dict:
 | Валидация | `max_results: int = Field(default=10, ge=1, le=100)` |
 | List поле | `ports: list[int] = [80, 443]` |
 
+### Выход плагина: entities
+
+Раннер возвращает не `dict`, строку или число, а типизированный `PluginResult`:
+
+```python
+from demon_cry_base.runner import BaseEntity, PluginResult
+
+
+class SearchHit(BaseEntity):
+    title: str
+    url: str
+    snippet: str
+
+
+async def search_run(config: SearchConfig, params: SearchParams) -> PluginResult:
+    ...
+    return PluginResult(
+        status="ok",
+        entities=[
+            SearchHit(title="...", url="...", snippet="..."),
+            SearchHit(title="...", url="...", snippet="..."),
+        ],
+    )
+```
+
+- `BaseEntity` — базовый класс сущности. Наследуйтесь и описывайте поля, которые плагин возвращает: `qtype`/`value`, `title`/`url`/`snippet` — чем угодно.
+- `PluginResult.status` — статус выполнения (например `"ok"`).
+- `PluginResult.entities` — список сущностей. Один запуск обычно возвращает их пачкой (2+), пустой список — валидный результат «ничего не найдено».
+
 #### Полный пример: плагин с обоими источниками
 
 ```python
-import asyncio
 import aiodns
 from typing import Literal
-from demon_cry_base import BasePlugin, PluginConfig, PluginParameters
+from demon_cry_base.plugin import BasePlugin, PluginConfig, PluginParameters
+from demon_cry_base.runner import BaseEntity, PluginResult
 
 
 class DnsLookupParams(PluginParameters):
@@ -184,6 +226,11 @@ class DnsLookupConfig(PluginConfig):
     name_servers: list[str] = ["1.1.1.1", "8.8.8.8"]
 
 
+class DnsRecord(BaseEntity):
+    qtype: str
+    value: str
+
+
 class DnsLookup(BasePlugin):
     name = "dns_lookup"
     description = "Finds DNS records"
@@ -193,12 +240,21 @@ class DnsLookup(BasePlugin):
     execute_func = "my_package.dns:dns_lookup_run"
 
 
-async def dns_lookup_run(config: DnsLookupConfig, params: DnsLookupParams) -> dict:
+async def dns_lookup_run(
+    config: DnsLookupConfig, params: DnsLookupParams
+) -> PluginResult:
     resolver = aiodns.DNSResolver(nameservers=config.name_servers)
     # config — настройки из БД (name_servers)
     # params.domain — домен из параметров
     # params.record_type — типы записей
     ...
+    return PluginResult(
+        status="ok",
+        entities=[
+            DnsRecord(qtype="A", value="93.184.216.34"),
+            DnsRecord(qtype="AAAA", value="2606:2800:220:1:248:1893:25c8:1946"),
+        ],
+    )
 ```
 
 ### Подключение к ядру (entry points)
@@ -218,7 +274,7 @@ my_plugin = "my_package.my_plugin:MyPlugin"
 Не путайте два похожих формата `модуль:объект`:
 
 - entry-point (`my_package.my_plugin:MyPlugin`) — указывает на **класс** плагина;
-- `execute_func` (`my_package.my_plugin:my_plugin_run`) — указывает на **async-функцию-раннер** `(config, params) -> dict`.
+- `execute_func` (`my_package.my_plugin:my_plugin_run`) — указывает на **async-функцию-раннер** `(config, params) -> PluginResult`.
 
 Как это работает на стороне ядра при `discover()`:
 
@@ -227,4 +283,3 @@ my_plugin = "my_package.my_plugin:MyPlugin"
 3. Берёт дефолты из `instance.config_model().model_dump()` и создаёт запись в БД с `enabled=False`.
 
 Требования к плагину: уникальное `name`, конструктор без аргументов, дефолтный конфиг должен быть валидным без секретов в коде.
-```
