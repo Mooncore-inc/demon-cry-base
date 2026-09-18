@@ -13,37 +13,22 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-
-      - name: Install dependencies
-        run: poetry install --no-root
-
-      - name: Build package
-        run: poetry build
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v10.1.0
         with:
-          name: dist
-          path: dist/
+          enable-cache: true
 
-  publish-pypi:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist/
+      - name: Install dependencies and build
+        run: uv build
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
