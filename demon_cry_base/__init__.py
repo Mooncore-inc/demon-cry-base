@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 
 from pydantic import BaseModel
 
@@ -29,16 +29,4 @@ class BasePlugin(ABC):
     category: str
     parameters_model: type[PluginParameters] = PluginParameters
     config_model: type[PluginConfig] = PluginConfig
-
-    @abstractmethod
-    async def execute(self, config: PluginConfig, params: PluginParameters) -> dict:
-        """Выполнение плагина.
-
-        Args:
-            config: Конфигурация плагина (загружена ядром).
-            params: Параметры из запроса.
-
-        Returns:
-            dict с результатом.
-        """
-        ...
+    execute_func: str
