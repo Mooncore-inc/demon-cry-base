@@ -7,7 +7,7 @@ license = { file = "LICENSE" }
 authors = [{name = "mooncore-inc"}]
 dynamic = ["version"]
 
-dependencies = ["pydantic>=2.0"]
+dependencies = ["pydantic>=2.7"]
 
 [dependency-groups]
 dev = [
