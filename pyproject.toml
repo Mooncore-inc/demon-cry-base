@@ -1,46 +1,34 @@
 [project]
 name = "demon-cry-base"
-dynamic = ["version"]
 description = "Base classes for demon-cry OSINT plugins"
-authors = [
-    {name = "mooncore-inc"}
-]
-license = "MIT"
+requires-python = ">=3.12, <3.15"
 readme = "README.md"
-requires-python = ">=3.12"
+license = { file = "LICENSE" }
+authors = [{name = "mooncore-inc"}]
+dynamic = ["version"]
+
 dependencies = ["pydantic>=2.0"]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.6.1,<5.0.0",
+    "ruff>=0.16.6,<0.17.0",
+]
+
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
 
 [tool.ruff]
 line-length = 88
 target-version = "py312"
-extend-exclude = ["alembic"]
 
 [tool.ruff.lint]
-select = [
-    "E",   # pycodestyle errors
-    "F",   # pyflakes (неиспользуемые переменные и импорты)
-    "I",   # isort (сортировка импортов)
-    "UP",  # pyupgrade (современный синтаксис)
-    "B",   # flake8-bugbear (антипаттерны, изменяемые аргументы по умолчанию)
-    "SIM", # flake8-simplify (упрощение синтаксиса)
-    "RET", # flake8-return (оптимизация return)
-]
-ignore = [
-    "E501", # длину строки контролирует ruff-format
-]
+select = ["E","F","I","UP","B","SIM","RET"]
+ignore = ["E501"]
 
 [tool.ruff.format]
 quote-style = "double"
-
-[tool.poetry]
-version = "0.0.0"
-
-[tool.poetry.requires-plugins]
-poetry-dynamic-versioning = { version = ">=1.0.0,<2.0.0", extras = ["plugin"] }
-
-[tool.poetry-dynamic-versioning]
-enable = true
-
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
-build-backend = "poetry_dynamic_versioning.backend"
