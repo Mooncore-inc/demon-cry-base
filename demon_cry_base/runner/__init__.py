@@ -1,3 +1,3 @@
-from demon_cry_base.runner.models import BaseEntity, PluginResult
+from demon_cry_base.runner.models import BaseEntity, ErrorEntity, PluginResult
 
-__all__ = ["BaseEntity", "PluginResult"]
+__all__ = ["BaseEntity", "ErrorEntity", "PluginResult"]
