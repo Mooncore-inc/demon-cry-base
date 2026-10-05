@@ -24,7 +24,7 @@ from demon_cry_base.runner import PluginResult
 
 
 async def ping_run(config: PluginConfig, params: PluginParameters) -> PluginResult:
-    return PluginResult(status="ok", entities=[])
+    return PluginResult.ok()
 
 
 class PingPlugin(BasePlugin):
@@ -64,7 +64,7 @@ class MyPlugin(BasePlugin):
 
 
 async def my_plugin_run(config: MyPluginConfig, params: MyPluginParams) -> PluginResult:
-    return PluginResult(status="ok", entities=[])
+    return PluginResult.ok()
 ```
 
 ### Два источника данных
@@ -193,18 +193,62 @@ class SearchHit(BaseEntity):
 
 async def search_run(config: SearchConfig, params: SearchParams) -> PluginResult:
     ...
-    return PluginResult(
-        status="ok",
-        entities=[
+    return PluginResult.ok(
+        [
             SearchHit(title="...", url="...", snippet="..."),
             SearchHit(title="...", url="...", snippet="..."),
-        ],
+        ]
     )
 ```
 
 - `BaseEntity` — базовый класс сущности. Наследуйтесь и описывайте поля, которые плагин возвращает: `qtype`/`value`, `title`/`url`/`snippet` — чем угодно.
-- `PluginResult.status` — статус выполнения (например `"ok"`).
+- `PluginResult.status` — `Literal["ok", "error", "partial"]`:
+  - `"ok"` — успех, все данные получены;
+  - `"error"` — полный провал, полезных сущностей нет;
+  - `"partial"` — частичный успех: есть и данные, и ошибки (например часть источников отвалилась).
 - `PluginResult.entities` — список сущностей. Один запуск обычно возвращает их пачкой (2+), пустой список — валидный результат «ничего не найдено».
+
+Создавайте результат через классметоды — `PluginResult.ok()`, `PluginResult.error()`, `PluginResult.partial()`:
+
+```python
+return PluginResult.ok([SearchHit(...)])
+return PluginResult.error([ErrorEntity(code="AUTH_FAILED", message="bad api key")])
+return PluginResult.partial([SearchHit(...), ErrorEntity(...)])
+```
+
+Прямой конструктор `PluginResult(status=..., entities=[...])` — low-level, эквивалентен классметодам.
+
+#### Ошибки: ErrorEntity
+
+`ErrorEntity` — это тоже `BaseEntity`, поэтому ошибки лежат в том же `entities` рядом с данными:
+
+```python
+from demon_cry_base.runner import ErrorEntity, PluginResult
+
+
+class SearchHit(BaseEntity):
+    title: str
+    url: str
+
+
+async def search_run(config: SearchConfig, params: SearchParams) -> PluginResult:
+    hits = [SearchHit(title="...", url="...")]
+    errors = [
+        ErrorEntity(
+            code="HTTP_429", message="rate limited", details={"retry_after": 60}
+        )
+    ]
+    if not hits:
+        return PluginResult.error(errors)
+    if errors:
+        return PluginResult.partial([*hits, *errors])
+    return PluginResult.ok(hits)
+```
+
+- `ErrorEntity.code: str` — машинный код (`HTTP_429`, `AUTH_FAILED`, `TIMEOUT`).
+- `ErrorEntity.message: str` — человекочитаемое описание.
+- `ErrorEntity.details: dict | None = None` — произвольный контекст (`retry_after`, `source`, `status_code`).
+- Правило: `error` — только `ErrorEntity` (данных нет), `partial` — смесь данных и `ErrorEntity` (≥1 сущность + ≥1 ошибка), `ok` — только данные.
 
 #### Полный пример: плагин с обоими источниками
 
@@ -248,12 +292,11 @@ async def dns_lookup_run(
     # params.domain — домен из параметров
     # params.record_type — типы записей
     ...
-    return PluginResult(
-        status="ok",
-        entities=[
+    return PluginResult.ok(
+        [
             DnsRecord(qtype="A", value="93.184.216.34"),
             DnsRecord(qtype="AAAA", value="2606:2800:220:1:248:1893:25c8:1946"),
-        ],
+        ]
     )
 ```
 
