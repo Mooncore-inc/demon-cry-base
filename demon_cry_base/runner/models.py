@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, SerializeAsAny
+from pydantic import BaseModel, SerializeAsAny, computed_field
 
 
 class BaseEntity(BaseModel):
@@ -16,17 +16,23 @@ class ErrorEntity(BaseEntity):
 
 
 class PluginResult(BaseModel):
-    status: Literal["ok", "error", "partial"]
     entities: SerializeAsAny[list[BaseEntity]]
+    error: list[ErrorEntity] = []
+
+    @computed_field
+    @property
+    def status(self) -> Literal["ok", "error", "partial"]:
+        has_data = bool(self.entities)
+        has_errors = bool(self.error)
+
+        if not has_data and has_errors:
+            return "error"
+        if has_data and has_errors:
+            return "partial"
+        return "ok"
 
     @classmethod
-    def ok(cls, entities: list[BaseEntity] = None) -> "PluginResult":
-        return cls(status="ok", entities=entities or [])
-
-    @classmethod
-    def error(cls, entities: list[BaseEntity] = None) -> "PluginResult":
-        return cls(status="error", entities=entities or [])
-
-    @classmethod
-    def partial(cls, entities: list[BaseEntity] = None) -> "PluginResult":
-        return cls(status="partial", entities=entities or [])
+    def build(
+        cls, entities: list[BaseEntity] = None, errors: list[ErrorEntity] = None
+    ) -> "PluginResult":
+        return cls(entities=entities or [], error=errors or [])
