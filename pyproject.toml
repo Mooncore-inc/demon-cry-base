@@ -12,6 +12,7 @@ dependencies = ["pydantic>=2.7"]
 [dependency-groups]
 dev = [
     "pre-commit>=4.6.1,<5.0.0",
+    "pytest>=9.1.1",
     "ruff>=0.16.6,<0.17.0",
 ]
 

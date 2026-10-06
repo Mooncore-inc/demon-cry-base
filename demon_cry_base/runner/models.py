@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, SerializeAsAny, computed_field
 
@@ -12,18 +12,18 @@ class BaseEntity(BaseModel):
 class ErrorEntity(BaseEntity):
     code: str
     message: str
-    details: dict | None = None
+    details: dict[str, Any] | None = None
 
 
 class PluginResult(BaseModel):
     entities: SerializeAsAny[list[BaseEntity]]
-    error: list[ErrorEntity] = []
+    errors: list[ErrorEntity] = []
 
     @computed_field
     @property
     def status(self) -> Literal["ok", "error", "partial"]:
         has_data = bool(self.entities)
-        has_errors = bool(self.error)
+        has_errors = bool(self.errors)
 
         if not has_data and has_errors:
             return "error"
@@ -33,6 +33,8 @@ class PluginResult(BaseModel):
 
     @classmethod
     def build(
-        cls, entities: list[BaseEntity] = None, errors: list[ErrorEntity] = None
+        cls,
+        entities: list[BaseEntity] | None = None,
+        errors: list[ErrorEntity] | None = None,
     ) -> "PluginResult":
-        return cls(entities=entities or [], error=errors or [])
+        return cls(entities=entities or [], errors=errors or [])
